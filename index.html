@@ -2,36 +2,68 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>CT Pro Moderno</title>
+    <title>CT Pro | Dashboard de Gestão</title>
     <style>
-        :root { --primary: #6366f1; --bg: #0f172a; --card: rgba(30, 41, 59, 0.7); --text: #f8fafc; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 20px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 500px; }
-        .box { background: var(--card); padding: 25px; border-radius: 20px; margin-bottom: 15px; }
-        select, input { width: 100%; padding: 10px; margin: 5px 0; background: #334155; border: none; border-radius: 10px; color: white; box-sizing: border-box; }
-        button { padding: 10px; cursor: pointer; border-radius: 10px; border: none; font-weight: bold; }
-        .item { background: #1e293b; padding: 15px; margin-top: 15px; border-radius: 15px; border-left: 5px solid var(--primary); display: flex; justify-content: space-between; align-items: center; }
+        :root {
+            --primary: #10b981; /* Verde esmeralda (Sucesso) */
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            --glass: rgba(255, 255, 255, 0.05);
+        }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: var(--bg-gradient); 
+            color: #f8fafc; 
+            margin: 0; min-height: 100vh;
+            display: flex; justify-content: center; padding: 20px;
+        }
+        .container { width: 100%; max-width: 800px; }
+        .glass-box { 
+            background: var(--glass); backdrop-filter: blur(12px);
+            padding: 30px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        h3 { margin-top: 0; font-weight: 600; letter-spacing: -0.5px; }
+        .grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .full-width { grid-column: span 2; }
+        input, select { 
+            width: 100%; padding: 12px; background: rgba(0,0,0,0.2); 
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;
+        }
+        button { 
+            padding: 12px; cursor: pointer; border-radius: 12px; border: none; 
+            background: var(--primary); color: #064e3b; font-weight: 700; transition: 0.3s;
+        }
+        button:hover { filter: brightness(1.2); }
+        .item { 
+            background: rgba(255,255,255,0.03); padding: 20px; margin-bottom: 10px; 
+            border-radius: 16px; display: flex; justify-content: space-between; align-items: center;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="box">
-        <input type="text" id="busca" placeholder="🔍 Pesquisar em tudo..." onkeyup="render()">
+    <div class="glass-box">
+        <input type="text" id="busca" placeholder="🔍 Pesquisar em todos os registros..." onkeyup="render()">
     </div>
-    <div class="box">
+
+    <div class="glass-box">
         <h3>Gestão CT Pro</h3>
-        <select id="tipo" onchange="atualizarOpcoes()"></select>
-        <select id="nome"></select>
-        <select id="motivo"></select>
-        <input type="text" id="detalhe" placeholder="Observações...">
-        <input type="datetime-local" id="data">
-        <button style="width:100%; background:var(--primary); color:white;" onclick="salvar()">Salvar</button>
+        <div class="grid-form">
+            <select id="tipo" onchange="atualizarOpcoes()"></select>
+            <select id="nome"></select>
+            <select id="motivo" class="full-width"></select>
+            <input type="text" id="detalhe" class="full-width" placeholder="Observações...">
+            <input type="datetime-local" id="data">
+            <button onclick="salvar()">Salvar Registro</button>
+        </div>
     </div>
+
     <div id="lista"></div>
 </div>
 
 <script>
+    // Configurações mantidas conforme solicitado
     const config = {
         cons: { nomes: ["Claudia", "Lucineia", "Nadelson", "Samara", "Sandra"], motivos: ["Férias", "Plantão", "Palestra", "Reunião"] },
         adm: { nomes: ["Sheila", "Kamilly", "Raquel"], motivos: ["Férias", "Consulta", "Atestado"] },
@@ -70,17 +102,17 @@
 
         document.getElementById('lista').innerHTML = filtrados.map(i => `
             <div class="item">
-                <div><b>${i.nome}</b><br><small>${i.motivo} | ${i.data.replace('T', ' ')}</small></div>
+                <div><b>${i.nome}</b><br><small style="opacity:0.7">${i.motivo} | ${i.data.replace('T', ' ')}</small></div>
                 <div>
-                    <button onclick="editar(${i.id})">✏️</button>
-                    <button onclick="excluir(${i.id})" style="color:#ef4444;">✕</button>
+                    <button onclick="editar(${i.id})" style="background:none; color:white;">✏️</button>
+                    <button onclick="excluir(${i.id})" style="background:none; color:#fb7185;">✕</button>
                 </div>
             </div>
         `).join('');
     }
 
     function excluir(id) {
-        if(confirm("Deseja realmente excluir este registro?")) {
+        if(confirm("Confirma a exclusão deste registro?")) {
             localStorage.setItem('ct_db', JSON.stringify(JSON.parse(localStorage.getItem('ct_db')).filter(i => i.id !== id)));
             render();
         }
@@ -106,10 +138,10 @@
             let diff = Math.ceil((data - hoje) / (1000 * 60 * 60 * 24));
             
             if (i.motivo === "Férias" && (diff === 10 || diff === 5 || diff === 30 || diff === 15)) {
-                alert(`Aviso: Férias de ${i.nome} em ${diff} dias.`);
+                alert(`Lembrete de Férias: ${i.nome} - Faltam ${diff} dias.`);
             }
             if (i.motivo === "Afastamento Político" && diff > 0 && diff % 15 === 0) {
-                alert(`Aviso: Afastamento Político de ${i.nome} em ${diff} dias.`);
+                alert(`Aviso Político: ${i.nome} - Faltam ${diff} dias.`);
             }
         });
     }
@@ -118,3 +150,5 @@
 </script>
 </body>
 </html>
+
+    
