@@ -3,66 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão CT Pro</title>
+    <title>CT Pro Moderno</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; padding: 10px; }
-        .box { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        select, input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn-acao { display: flex; gap: 5px; }
-        button { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; color: white; font-weight: bold; }
-        .item { padding: 12px; margin-top: 10px; border-radius: 8px; border-left: 6px solid #ccc; background: white; }
+        :root {
+            --primary: #6366f1;
+            --bg: #0f172a;
+            --card: rgba(30, 41, 59, 0.7);
+            --text: #f8fafc;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 500px; }
+        .box { background: var(--card); backdrop-filter: blur(10px); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        h3 { margin-top: 0; color: #fff; text-align: center; }
+        select, input { width: 100%; padding: 12px; margin: 8px 0; background: #334155; border: none; border-radius: 10px; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; margin-top: 10px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-save { background: var(--primary); color: white; }
+        .btn-save:hover { background: #4f46e5; }
+        .btn-export { background: transparent; border: 1px solid var(--primary); color: var(--primary); margin-top: 10px; }
+        .item { background: #1e293b; padding: 15px; margin-top: 15px; border-radius: 15px; border-left: 5px solid var(--primary); display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <h3>Painel Administrativo</h3>
-    
-    <label>Tipo:</label>
-    <select id="tipo" onchange="atualizarOpcoes()">
-        <option value="cons">Conselheiro</option>
-        <option value="adm">Administrativo</option>
-        <option value="limp">Limpeza (Francinete)</option>
-        <option value="veic">Veículo</option>
-    </select>
-
-    <label>Nome:</label>
-    <select id="nome"></select>
-
-    <label>Motivo:</label>
-    <select id="motivo"></select>
-
-    <label>Observações/Detalhes:</label>
-    <input type="text" id="detalhe" placeholder="Ex: Detalhes do plantão ou relatório...">
-    
-    <label>Data e Hora:</label>
-    <input type="datetime-local" id="data">
-    
-    <button onclick="salvar()" style="background:#27ae60; margin-top:10px;">Salvar Registro</button>
-    <button onclick="exportarCSV()" style="background:#2980b9; margin-top:5px;">Exportar para Excel (CSV)</button>
+<div class="container">
+    <div class="box">
+        <h3>Gestão CT Pro</h3>
+        <select id="tipo" onchange="atualizarOpcoes()"></select>
+        <select id="nome"></select>
+        <select id="motivo"></select>
+        <input type="text" id="detalhe" placeholder="Observações...">
+        <input type="datetime-local" id="data">
+        <button class="btn-save" onclick="salvar()">Salvar Registro</button>
+        <button class="btn-export" onclick="exportarCSV()">Exportar (CSV)</button>
+    </div>
+    <div id="lista"></div>
 </div>
-
-<div id="lista"></div>
 
 <script>
     const config = {
-        cons: { 
-            nomes: ["Claudia", "Lucineia", "Nadelson", "Samara", "Sandra"], 
-            motivos: ["Plantão (Integral)", "Plantão (Meio Período)", "Relatório", "Palestra", "Reunião", "Férias", "Abono", "Atestado"] 
-        },
-        adm: { 
-            nomes: ["Sheila", "Kamilly", "Raquel"], 
-            motivos: ["Consulta", "Atestado", "Saída Antecipada", "Hora Extra"] 
-        },
-        limp: { 
-            nomes: ["Francinete"], 
-            motivos: ["Limpeza Geral", "Layout", "Manutenção", "Férias"] 
-        },
-        veic: { 
-            nomes: ["Veículo 01", "Veículo 02"], 
-            motivos: ["Revisão", "OS", "Abastecimento"] 
-        }
+        cons: { nomes: ["Claudia", "Lucineia", "Nadelson", "Samara", "Sandra"], motivos: ["Plantão (Integral)", "Plantão (Meio Período)", "Relatório", "Palestra", "Reunião"] },
+        adm: { nomes: ["Sheila", "Kamilly", "Raquel"], motivos: ["Consulta", "Atestado", "Saída Antecipada", "Hora Extra"] },
+        limp: { nomes: ["Francinete"], motivos: ["Limpeza Geral", "Layout", "Manutenção"] },
+        veic: { nomes: ["Siena", "Air Cross"], motivos: ["Revisão", "OS", "Abastecimento", "Uso Externo"] }
     };
+
+    function inicializar() {
+        const tipoSelect = document.getElementById('tipo');
+        tipoSelect.innerHTML = Object.keys(config).map(t => `<option value="${t}">${t.toUpperCase()}</option>`).join('');
+        atualizarOpcoes();
+        render();
+    }
 
     function atualizarOpcoes() {
         const tipo = document.getElementById('tipo').value;
@@ -72,45 +62,29 @@
 
     function salvar() {
         let db = JSON.parse(localStorage.getItem('ct_db') || '[]');
-        db.push({ 
-            id: Date.now(), 
-            tipo: document.getElementById('tipo').value, 
-            nome: document.getElementById('nome').value, 
-            motivo: document.getElementById('motivo').value, 
-            detalhe: document.getElementById('detalhe').value, 
-            data: document.getElementById('data').value 
-        });
+        db.push({ id: Date.now(), tipo: document.getElementById('tipo').value, nome: document.getElementById('nome').value, motivo: document.getElementById('motivo').value, detalhe: document.getElementById('detalhe').value, data: document.getElementById('data').value });
         localStorage.setItem('ct_db', JSON.stringify(db));
         render();
-    }
-
-    function excluir(id) { 
-        if(confirm("Excluir?")) { 
-            localStorage.setItem('ct_db', JSON.stringify(JSON.parse(localStorage.getItem('ct_db')).filter(i => i.id !== id))); 
-            render(); 
-        } 
-    }
-
-    function exportarCSV() {
-        let data = JSON.parse(localStorage.getItem('ct_db'));
-        let csv = "Tipo,Nome,Motivo,Observacoes,Data\n" + data.map(i => `${i.tipo},${i.nome},${i.motivo},${i.detalhe},${i.data}`).join("\n");
-        let blob = new Blob([csv], {type: 'text/csv'});
-        let url = window.URL.createObjectURL(blob);
-        let a = document.createElement('a'); a.href = url; a.download = 'registros_ct.csv'; a.click();
     }
 
     function render() {
         let db = JSON.parse(localStorage.getItem('ct_db') || '[]');
         document.getElementById('lista').innerHTML = db.map(i => `
             <div class="item">
-                <div><b>${i.nome}</b> (${i.tipo})<br>📅 ${i.data.replace('T', ' ')}<br>📍 ${i.motivo}<br>📝 <i>${i.detalhe}</i></div>
-                <div class="btn-acao"><button onclick="excluir(${i.id})" style="background:#e74c3c;">Excluir</button></div>
+                <div><b>${i.nome}</b><br><small>${i.motivo} | ${i.data.replace('T', ' ')}</small></div>
+                <button onclick="excluir(${i.id})" style="background:transparent; color:#ef4444; border:none;">✕</button>
             </div>
         `).join('');
     }
 
-    atualizarOpcoes();
-    render();
+    function excluir(id) { 
+        localStorage.setItem('ct_db', JSON.stringify(JSON.parse(localStorage.getItem('ct_db')).filter(i => i.id !== id))); 
+        render(); 
+    }
+
+    inicializar();
 </script>
 </body>
 </html>
+
+            
