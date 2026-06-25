@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel CT</title>
+    <style>
+        body { font-family: sans-serif; padding: 10px; background: #f0f2f5; }
+        .btn-filtro { padding: 8px; margin: 2px; cursor: pointer; border: none; border-radius: 4px; background: #ddd; }
+        .card { background: white; padding: 10px; margin: 5px 0; border-radius: 5px; border-left: 5px solid #ccc; }
+        .cons { border-left-color: #28a745; }
+        .adm { border-left-color: #ffc107; }
+        .veic { border-left-color: #dc3545; }
+        input, select, button { width: 100%; padding: 10px; margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <h3>Painel de Gestão</h3>
+    
+    <button class="btn-filtro" onclick="filtrar('todos')">Tudo</button>
+    <button class="btn-filtro" onclick="filtrar('cons')">Conselheiros</button>
+    <button class="btn-filtro" onclick="filtrar('adm')">Adm</button>
+    <button class="btn-filtro" onclick="filtrar('veic')">Veículo</button>
+
+    <div style="margin-top: 15px; border-top: 1px solid #ccc; pt: 10px;">
+        <select id="cat">
+            <option value="cons">Conselheiro</option>
+            <option value="adm">Administrativo</option>
+            <option value="veic">Veículo</option>
+        </select>
+        <input type="text" id="nome" placeholder="Nome/Item">
+        <input type="text" id="obs" placeholder="Status/Data/Info">
+        <button onclick="salvar()">Registrar</button>
+    </div>
+
+    <div id="lista"></div>
+
+    <script>
+        function salvar() {
+            let logs = JSON.parse(localStorage.getItem('ct_data') || '[]');
+            logs.push({ cat: document.getElementById('cat').value, nome: document.getElementById('nome').value, obs: document.getElementById('obs').value });
+            localStorage.setItem('ct_data', JSON.stringify(logs));
+            filtrar('todos');
+        }
+
+        function filtrar(categoria) {
+            const logs = JSON.parse(localStorage.getItem('ct_data') || '[]');
+            const lista = document.getElementById('lista');
+            lista.innerHTML = logs
+                .filter(l => categoria === 'todos' || l.cat === categoria)
+                .map(l => `<div class="card ${l.cat}"><b>${l.nome}</b><br>${l.obs}</div>`).join('');
+        }
+        filtrar('todos');
+    </script>
+</body>
+</html>
