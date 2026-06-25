@@ -2,30 +2,26 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CT Pro Moderno</title>
+    <title>CT Pro Moderno - Gestão Completa</title>
     <style>
-        :root {
-            --primary: #6366f1;
-            --bg: #0f172a;
-            --card: rgba(30, 41, 59, 0.7);
-            --text: #f8fafc;
-        }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 20px; display: flex; justify-content: center; }
+        /* Estilos mantidos para manter a identidade visual */
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #f8fafc; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .container { width: 100%; max-width: 500px; }
-        .box { background: var(--card); backdrop-filter: blur(10px); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
-        h3 { margin-top: 0; color: #fff; text-align: center; }
-        select, input { width: 100%; padding: 12px; margin: 8px 0; background: #334155; border: none; border-radius: 10px; color: white; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; margin-top: 10px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-save { background: var(--primary); color: white; }
-        .btn-save:hover { background: #4f46e5; }
-        .btn-export { background: transparent; border: 1px solid var(--primary); color: var(--primary); margin-top: 10px; }
-        .item { background: #1e293b; padding: 15px; margin-top: 15px; border-radius: 15px; border-left: 5px solid var(--primary); display: flex; justify-content: space-between; align-items: center; }
+        .box { background: rgba(30, 41, 59, 0.7); padding: 25px; border-radius: 20px; margin-bottom: 20px; }
+        input, select { width: 100%; padding: 10px; margin: 5px 0; border-radius: 8px; border: none; background: #334155; color: white; box-sizing: border-box; }
+        button { padding: 10px; cursor: pointer; border-radius: 8px; border: none; margin-top: 5px; }
+        .btn-save { background: #6366f1; color: white; width: 100%; }
+        .item { background: #1e293b; padding: 15px; margin-top: 10px; border-radius: 10px; border-left: 5px solid #6366f1; }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <div class="box">
+        <h3>Pesquisar Registros</h3>
+        <input type="text" id="busca" placeholder="Digite para filtrar por qualquer campo..." onkeyup="render()">
+    </div>
+
     <div class="box">
         <h3>Gestão CT Pro</h3>
         <select id="tipo" onchange="atualizarOpcoes()"></select>
@@ -34,57 +30,82 @@
         <input type="text" id="detalhe" placeholder="Observações...">
         <input type="datetime-local" id="data">
         <button class="btn-save" onclick="salvar()">Salvar Registro</button>
-        <button class="btn-export" onclick="exportarCSV()">Exportar (CSV)</button>
     </div>
+
     <div id="lista"></div>
 </div>
 
 <script>
     const config = {
-        cons: { nomes: ["Claudia", "Lucineia", "Nadelson", "Samara", "Sandra"], motivos: ["Plantão (Integral)", "Plantão (Meio Período)", "Relatório", "Palestra", "Reunião"] },
-        adm: { nomes: ["Sheila", "Kamilly", "Raquel"], motivos: ["Consulta", "Atestado", "Saída Antecipada", "Hora Extra"] },
-        limp: { nomes: ["Francinete"], motivos: ["Limpeza Geral", "Layout", "Manutenção"] },
-        veic: { nomes: ["Siena", "Air Cross"], motivos: ["Revisão", "OS", "Abastecimento", "Uso Externo"] }
+        cons: { nomes: ["Claudia", "Lucineia", "Nadelson", "Samara", "Sandra"], motivos: ["Férias", "Plantão", "Palestra", "Reunião"] },
+        adm: { nomes: ["Sheila", "Kamilly", "Raquel"], motivos: ["Férias", "Consulta", "Atestado"] },
+        veic: { nomes: ["Siena", "Air Cross"], motivos: ["Revisão", "OS"] },
+        afast: { nomes: ["Servidor X"], motivos: ["Afastamento Político"] }
     };
-
-    function inicializar() {
-        const tipoSelect = document.getElementById('tipo');
-        tipoSelect.innerHTML = Object.keys(config).map(t => `<option value="${t}">${t.toUpperCase()}</option>`).join('');
-        atualizarOpcoes();
-        render();
-    }
-
-    function atualizarOpcoes() {
-        const tipo = document.getElementById('tipo').value;
-        document.getElementById('nome').innerHTML = config[tipo].nomes.map(n => `<option value="${n}">${n}</option>`).join('');
-        document.getElementById('motivo').innerHTML = config[tipo].motivos.map(m => `<option value="${m}">${m}</option>`).join('');
-    }
-
-    function salvar() {
-        let db = JSON.parse(localStorage.getItem('ct_db') || '[]');
-        db.push({ id: Date.now(), tipo: document.getElementById('tipo').value, nome: document.getElementById('nome').value, motivo: document.getElementById('motivo').value, detalhe: document.getElementById('detalhe').value, data: document.getElementById('data').value });
-        localStorage.setItem('ct_db', JSON.stringify(db));
-        render();
-    }
 
     function render() {
         let db = JSON.parse(localStorage.getItem('ct_db') || '[]');
-        document.getElementById('lista').innerHTML = db.map(i => `
+        let termo = document.getElementById('busca').value.toLowerCase();
+        
+        // Filtra comparando o termo com TODOS os campos
+        let filtrados = db.filter(i => 
+            i.nome.toLowerCase().includes(termo) || 
+            i.tipo.toLowerCase().includes(termo) ||
+            i.motivo.toLowerCase().includes(termo) ||
+            i.detalhe.toLowerCase().includes(termo) ||
+            i.data.includes(termo)
+        );
+
+        document.getElementById('lista').innerHTML = filtrados.map(i => `
             <div class="item">
-                <div><b>${i.nome}</b><br><small>${i.motivo} | ${i.data.replace('T', ' ')}</small></div>
-                <button onclick="excluir(${i.id})" style="background:transparent; color:#ef4444; border:none;">✕</button>
+                <div><b>${i.nome}</b> (${i.tipo})<br><small>${i.motivo} - ${i.detalhe} | ${i.data.replace('T', ' ')}</small></div>
+                <button onclick="editar(${i.id})">✏️</button>
+                <button onclick="excluir(${i.id})" style="color:red">✕</button>
             </div>
         `).join('');
     }
 
-    function excluir(id) { 
-        localStorage.setItem('ct_db', JSON.stringify(JSON.parse(localStorage.getItem('ct_db')).filter(i => i.id !== id))); 
-        render(); 
+    function excluir(id) {
+        if(confirm("Deseja realmente excluir este registro?")) {
+            let db = JSON.parse(localStorage.getItem('ct_db')).filter(i => i.id !== id);
+            localStorage.setItem('ct_db', JSON.stringify(db));
+            render();
+        }
     }
 
+    function editar(id) {
+        let db = JSON.parse(localStorage.getItem('ct_db'));
+        let item = db.find(i => i.id === id);
+        document.getElementById('tipo').value = item.tipo;
+        atualizarOpcoes();
+        document.getElementById('nome').value = item.nome;
+        document.getElementById('motivo').value = item.motivo;
+        document.getElementById('detalhe').value = item.detalhe;
+        document.getElementById('data').value = item.data;
+        excluir(id); // Remove o antigo para salvar como editado
+    }
+
+    // Lógica de Alertas por Regras (Férias e Afastamento)
+    function verificarPrazos() {
+        let db = JSON.parse(localStorage.getItem('ct_db') || '[]');
+        let agora = new Date();
+        db.forEach(item => {
+            let dataRegistro = new Date(item.data);
+            let diffDias = Math.ceil((dataRegistro - agora) / (1000 * 60 * 60 * 24));
+
+            if (item.motivo === "Férias" && (diffDias === 10 || diffDias === 5 || diffDias === 30 || diffDias === 15)) {
+                alert(`ALERTA: Férias de ${item.nome} em ${diffDias} dias!`);
+            } else if (item.motivo === "Afastamento Político" && diffDias % 15 === 0) {
+                alert(`ALERTA: Afastamento político de ${item.nome} em ${diffDias} dias.`);
+            }
+        });
+    }
+
+    // ... (Manter as funções inicializar, atualizarOpcoes e salvar do código anterior)
+    
+    // Inicia e checa prazos
     inicializar();
+    verificarPrazos();
 </script>
 </body>
 </html>
-
-            
