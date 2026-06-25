@@ -2,54 +2,65 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Painel CT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão CT Pro</title>
     <style>
-        body { font-family: sans-serif; padding: 10px; background: #f0f2f5; }
-        .btn-filtro { padding: 8px; margin: 2px; cursor: pointer; border: none; border-radius: 4px; background: #ddd; }
-        .card { background: white; padding: 10px; margin: 5px 0; border-radius: 5px; border-left: 5px solid #ccc; }
-        .cons { border-left-color: #28a745; }
-        .adm { border-left-color: #ffc107; }
-        .veic { border-left-color: #dc3545; }
-        input, select, button { width: 100%; padding: 10px; margin: 5px 0; }
+        :root { --cons: #2ecc71; --adm: #f1c40f; --veic: #e74c3c; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f8f9fa; padding: 15px; margin: 0; }
+        .box { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .filters { display: flex; gap: 5px; margin-bottom: 15px; justify-content: center; }
+        button { border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-add { background: #3498db; color: white; width: 100%; margin-top: 10px; }
+        input, select { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .item { padding: 12px; margin-bottom: 8px; border-radius: 8px; border-left: 6px solid; cursor: pointer; background: #fff; display: flex; justify-content: space-between; }
+        .cons-b { border-left-color: var(--cons); }
+        .adm-b { border-left-color: var(--adm); }
+        .veic-b { border-left-color: var(--veic); }
     </style>
 </head>
 <body>
-    <h3>Painel de Gestão</h3>
-    
-    <button class="btn-filtro" onclick="filtrar('todos')">Tudo</button>
-    <button class="btn-filtro" onclick="filtrar('cons')">Conselheiros</button>
-    <button class="btn-filtro" onclick="filtrar('adm')">Adm</button>
-    <button class="btn-filtro" onclick="filtrar('veic')">Veículo</button>
 
-    <div style="margin-top: 15px; border-top: 1px solid #ccc; pt: 10px;">
+    <div class="box">
+        <h2 style="margin-top:0">Painel de Gestão CT</h2>
+        <div class="filters">
+            <button onclick="render('todos')">🌐</button>
+            <button onclick="render('cons')">👨‍⚖️</button>
+            <button onclick="render('adm')">📁</button>
+            <button onclick="render('veic')">🚗</button>
+        </div>
         <select id="cat">
             <option value="cons">Conselheiro</option>
             <option value="adm">Administrativo</option>
             <option value="veic">Veículo</option>
         </select>
-        <input type="text" id="nome" placeholder="Nome/Item">
-        <input type="text" id="obs" placeholder="Status/Data/Info">
-        <button onclick="salvar()">Registrar</button>
+        <input type="text" id="nome" placeholder="Nome ou Item">
+        <input type="text" id="obs" placeholder="Detalhes (Ex: Férias, Manutenção)">
+        <button class="btn-add" onclick="salvar()">Adicionar Registro</button>
     </div>
 
     <div id="lista"></div>
 
     <script>
         function salvar() {
-            let logs = JSON.parse(localStorage.getItem('ct_data') || '[]');
-            logs.push({ cat: document.getElementById('cat').value, nome: document.getElementById('nome').value, obs: document.getElementById('obs').value });
-            localStorage.setItem('ct_data', JSON.stringify(logs));
-            filtrar('todos');
+            let data = JSON.parse(localStorage.getItem('db') || '[]');
+            data.push({ id: Date.now(), cat: document.getElementById('cat').value, nome: document.getElementById('nome').value, obs: document.getElementById('obs').value });
+            localStorage.setItem('db', JSON.stringify(data));
+            render('todos');
         }
-
-        function filtrar(categoria) {
-            const logs = JSON.parse(localStorage.getItem('ct_data') || '[]');
+        function remover(id) {
+            let data = JSON.parse(localStorage.getItem('db')).filter(i => i.id !== id);
+            localStorage.setItem('db', JSON.stringify(data));
+            render('todos');
+        }
+        function render(cat) {
+            let data = JSON.parse(localStorage.getItem('db') || '[]');
             const lista = document.getElementById('lista');
-            lista.innerHTML = logs
-                .filter(l => categoria === 'todos' || l.cat === categoria)
-                .map(l => `<div class="card ${l.cat}"><b>${l.nome}</b><br>${l.obs}</div>`).join('');
+            lista.innerHTML = data.filter(i => cat === 'todos' || i.cat === cat)
+                .map(i => `<div class="item ${i.cat}-b" onclick="remover(${i.id})">
+                    <div><b>${i.nome}</b><br><small>${i.obs}</small></div>
+                    <span style="color:#ccc">✕</span></div>`).join('');
         }
-        filtrar('todos');
+        render('todos');
     </script>
 </body>
 </html>
