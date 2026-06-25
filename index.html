@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -17,17 +18,28 @@
 
 <div class="box">
     <h3>Painel Administrativo</h3>
+    
+    <label>Tipo:</label>
     <select id="tipo" onchange="atualizarOpcoes()">
         <option value="cons">Conselheiro</option>
         <option value="adm">Administrativo</option>
         <option value="limp">Limpeza (Francinete)</option>
         <option value="veic">Veículo</option>
     </select>
+
+    <label>Nome:</label>
     <select id="nome"></select>
-    <input type="text" id="motivo" placeholder="Motivo/Ocorrência">
-    <input type="text" id="detalhe" placeholder="Local ou Detalhes">
+
+    <label>Motivo:</label>
+    <select id="motivo"></select>
+
+    <label>Observações/Detalhes:</label>
+    <input type="text" id="detalhe" placeholder="Ex: Plantão tarde, Relatório de caso X...">
+    
+    <label>Data e Hora:</label>
     <input type="datetime-local" id="data">
-    <button onclick="salvar()" style="background:#27ae60;">Salvar Registro</button>
+    
+    <button onclick="salvar()" style="background:#27ae60; margin-top:10px;">Salvar Registro</button>
     <button onclick="exportarCSV()" style="background:#2980b9; margin-top:5px;">Exportar para Excel (CSV)</button>
 </div>
 
@@ -35,29 +47,54 @@
 
 <script>
     const config = {
-        cons: { nomes: ["Claudia", "Lucineia", "Nadelson", "Samara", "Sandra"], motivos: ["Palestra", "Reunião", "Férias", "Abono", "Atestado"] },
-        adm: { nomes: ["Sheila", "Kamilly", "Raquel"], motivos: ["Consulta", "Atestado", "Saída Antecipada", "Hora Extra"] },
-        limp: { nomes: ["Francinete"], motivos: ["Limpeza Geral", "Layout", "Manutenção", "Férias"] },
-        veic: { nomes: ["Veículo 01", "Veículo 02"], motivos: ["Revisão", "OS", "Abastecimento"] }
+        cons: { 
+            nomes: ["Claudia", "Lucineia", "Nadelson", "Samara", "Sandra"], 
+            motivos: ["Plantão (Meio Período)", "Relatório", "Palestra", "Reunião", "Férias", "Abono", "Atestado"] 
+        },
+        adm: { 
+            nomes: ["Sheila", "Kamilly", "Raquel"], 
+            motivos: ["Consulta", "Atestado", "Saída Antecipada", "Hora Extra"] 
+        },
+        limp: { 
+            nomes: ["Francinete"], 
+            motivos: ["Limpeza Geral", "Layout", "Manutenção", "Férias"] 
+        },
+        veic: { 
+            nomes: ["Veículo 01", "Veículo 02"], 
+            motivos: ["Revisão", "OS", "Abastecimento"] 
+        }
     };
 
     function atualizarOpcoes() {
         const tipo = document.getElementById('tipo').value;
         document.getElementById('nome').innerHTML = config[tipo].nomes.map(n => `<option value="${n}">${n}</option>`).join('');
+        document.getElementById('motivo').innerHTML = config[tipo].motivos.map(m => `<option value="${m}">${m}</option>`).join('');
     }
 
     function salvar() {
         let db = JSON.parse(localStorage.getItem('ct_db') || '[]');
-        db.push({ id: Date.now(), tipo: document.getElementById('tipo').value, nome: document.getElementById('nome').value, motivo: document.getElementById('motivo').value, detalhe: document.getElementById('detalhe').value, data: document.getElementById('data').value });
+        db.push({ 
+            id: Date.now(), 
+            tipo: document.getElementById('tipo').value, 
+            nome: document.getElementById('nome').value, 
+            motivo: document.getElementById('motivo').value, 
+            detalhe: document.getElementById('detalhe').value, 
+            data: document.getElementById('data').value 
+        });
         localStorage.setItem('ct_db', JSON.stringify(db));
         render();
     }
 
-    function excluir(id) { if(confirm("Excluir?")) { localStorage.setItem('ct_db', JSON.stringify(JSON.parse(localStorage.getItem('ct_db')).filter(i => i.id !== id))); render(); } }
+    function excluir(id) { 
+        if(confirm("Excluir?")) { 
+            localStorage.setItem('ct_db', JSON.stringify(JSON.parse(localStorage.getItem('ct_db')).filter(i => i.id !== id))); 
+            render(); 
+        } 
+    }
 
     function exportarCSV() {
         let data = JSON.parse(localStorage.getItem('ct_db'));
-        let csv = "Tipo,Nome,Motivo,Detalhe,Data\n" + data.map(i => `${i.tipo},${i.nome},${i.motivo},${i.detalhe},${i.data}`).join("\n");
+        let csv = "Tipo,Nome,Motivo,Observacoes,Data\n" + data.map(i => `${i.tipo},${i.nome},${i.motivo},${i.detalhe},${i.data}`).join("\n");
         let blob = new Blob([csv], {type: 'text/csv'});
         let url = window.URL.createObjectURL(blob);
         let a = document.createElement('a'); a.href = url; a.download = 'registros_ct.csv'; a.click();
@@ -67,7 +104,7 @@
         let db = JSON.parse(localStorage.getItem('ct_db') || '[]');
         document.getElementById('lista').innerHTML = db.map(i => `
             <div class="item">
-                <div><b>${i.nome}</b> (${i.tipo})<br>📅 ${i.data.replace('T', ' ')}<br>📍 ${i.motivo} - ${i.detalhe}</div>
+                <div><b>${i.nome}</b> (${i.tipo})<br>📅 ${i.data.replace('T', ' ')}<br>📍 ${i.motivo}<br>📝 <i>${i.detalhe}</i></div>
                 <div class="btn-acao"><button onclick="excluir(${i.id})" style="background:#e74c3c;">Excluir</button></div>
             </div>
         `).join('');
@@ -78,3 +115,6 @@
 </script>
 </body>
 </html>
+
+    
+        
