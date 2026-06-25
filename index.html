@@ -3,77 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão Adm - CT</title>
+    <title>Gestão CT - Completa</title>
     <style>
-        body { font-family: sans-serif; background: #f4f4f9; padding: 15px; }
-        .box { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        select, input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 6px; }
-        .item { padding: 12px; margin-top: 10px; border-radius: 8px; border-left: 6px solid #f1c40f; background: white; display: flex; justify-content: space-between; align-items: center; }
-        button { width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        body { font-family: sans-serif; background: #f0f2f5; padding: 10px; }
+        .card-box { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        select, input { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #2c3e50; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .item { padding: 12px; margin-top: 10px; border-radius: 8px; border-left: 6px solid #ccc; background: white; }
+        .cons-c { border-left-color: #27ae60; }
+        .adm-c { border-left-color: #f39c12; }
+        .veic-c { border-left-color: #e74c3c; }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <h3>Gestão Administrativa</h3>
-    <select id="admNome">
-        <option>Sheila</option>
-        <option>Kamilly</option>
-        <option>Raquel</option>
-        <option>Francinete (Limpeza)</option>
+<div class="card-box">
+    <h3 style="margin-top:0">Novo Registro</h3>
+    <select id="tipo" onchange="atualizarOpcoes()">
+        <option value="cons">Conselheiro</option>
+        <option value="adm">Adm/Limpeza</option>
+        <option value="veic">Veículo</option>
     </select>
+    <select id="nome"></select>
+    <select id="motivo"></select>
     
-    <select id="tipoMov">
-        <option value="Hora Extra">Hora Extra (+)</option>
-        <option value="Falta">Falta (-)</option>
-        <option value="Devendo Horas">Devendo Horas (-)</option>
-        <option value="Abono">Abono (+)</option>
-        <option value="Férias">Férias</option>
-        <option value="Dias na Casa">Dias na Casa (Contagem)</option>
-    </select>
+    <!-- Campos específicos -->
+    <input type="text" id="extra" placeholder="Local (Conselheiros) ou Detalhes (Adm/Veículo)">
+    <input type="datetime-local" id="dataHora">
     
-    <input type="text" id="qtd" placeholder="Quantidade (ex: 2h, 1 dia, 5 dias)">
-    <input type="date" id="data">
-    <button onclick="salvar()">Registrar Movimentação</button>
+    <button onclick="salvar()">Registrar</button>
 </div>
 
 <div id="lista"></div>
 
 <script>
+    const configuracao = {
+        cons: {
+            nomes: ["Claudia", "Lucineia", "Nadelson", "Samara", "Sandra"],
+            motivos: ["Palestra", "Reunião", "Férias", "Abono", "Atestado"]
+        },
+        adm: {
+            nomes: ["Sheila", "Kamilly", "Raquel", "Francinete (Limpeza)"],
+            motivos: ["Consulta Médica", "Atestado", "Saída Antecipada", "Falta"]
+        },
+        veic: {
+            nomes: ["Veículo 01", "Veículo 02"],
+            motivos: ["Revisão", "Manutenção (OS)", "Abastecimento"]
+        }
+    };
+
+    function atualizarOpcoes() {
+        const tipo = document.getElementById('tipo').value;
+        document.getElementById('nome').innerHTML = configuracao[tipo].nomes.map(n => `<option value="${n}">${n}</option>`).join('');
+        document.getElementById('motivo').innerHTML = configuracao[tipo].motivos.map(m => `<option value="${m}">${m}</option>`).join('');
+    }
+
     function salvar() {
-        let db = JSON.parse(localStorage.getItem('adm_db') || '[]');
+        let db = JSON.parse(localStorage.getItem('ct_db_final') || '[]');
         db.push({
             id: Date.now(),
-            nome: document.getElementById('admNome').value,
-            tipo: document.getElementById('tipoMov').value,
-            qtd: document.getElementById('qtd').value,
-            data: document.getElementById('data').value
+            tipo: document.getElementById('tipo').value,
+            nome: document.getElementById('nome').value,
+            motivo: document.getElementById('motivo').value,
+            extra: document.getElementById('extra').value,
+            dataHora: document.getElementById('dataHora').value
         });
-        localStorage.setItem('adm_db', JSON.stringify(db));
+        localStorage.setItem('ct_db_final', JSON.stringify(db));
         render();
     }
 
-    function remover(id) {
-        if(confirm("Excluir este registro?")) {
-            let db = JSON.parse(localStorage.getItem('adm_db')).filter(i => i.id !== id);
-            localStorage.setItem('adm_db', JSON.stringify(db));
-            render();
-        }
-    }
-
     function render() {
-        let db = JSON.parse(localStorage.getItem('adm_db') || '[]');
+        let db = JSON.parse(localStorage.getItem('ct_db_final') || '[]');
         document.getElementById('lista').innerHTML = db.map(i => `
-            <div class="item" onclick="remover(${i.id})">
-                <div><b>${i.nome}</b> | ${i.tipo}<br><small>${i.data} - ${i.qtd}</small></div>
-                <span>✕</span>
+            <div class="item ${i.tipo}-c" onclick="if(confirm('Remover registro?')) { this.remove(); }">
+                <div><b>${i.nome}</b> - ${i.motivo}<br>
+                <small>🕒 ${i.dataHora.replace('T', ' às ')}</small><br>
+                <small>📍 ${i.extra}</small></div>
             </div>
         `).join('');
     }
+
+    atualizarOpcoes();
     render();
 </script>
 </body>
 </html>
-
-
-    
