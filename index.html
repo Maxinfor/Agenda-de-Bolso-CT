@@ -2,26 +2,23 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>CT Pro Moderno - Gestão Completa</title>
+    <title>CT Pro Moderno</title>
     <style>
-        /* Estilos mantidos para manter a identidade visual */
-        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #f8fafc; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        :root { --primary: #6366f1; --bg: #0f172a; --card: rgba(30, 41, 59, 0.7); --text: #f8fafc; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 20px; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 500px; }
-        .box { background: rgba(30, 41, 59, 0.7); padding: 25px; border-radius: 20px; margin-bottom: 20px; }
-        input, select { width: 100%; padding: 10px; margin: 5px 0; border-radius: 8px; border: none; background: #334155; color: white; box-sizing: border-box; }
-        button { padding: 10px; cursor: pointer; border-radius: 8px; border: none; margin-top: 5px; }
-        .btn-save { background: #6366f1; color: white; width: 100%; }
-        .item { background: #1e293b; padding: 15px; margin-top: 10px; border-radius: 10px; border-left: 5px solid #6366f1; }
+        .box { background: var(--card); padding: 25px; border-radius: 20px; margin-bottom: 15px; }
+        select, input { width: 100%; padding: 10px; margin: 5px 0; background: #334155; border: none; border-radius: 10px; color: white; box-sizing: border-box; }
+        button { padding: 10px; cursor: pointer; border-radius: 10px; border: none; font-weight: bold; }
+        .item { background: #1e293b; padding: 15px; margin-top: 15px; border-radius: 15px; border-left: 5px solid var(--primary); display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="box">
-        <h3>Pesquisar Registros</h3>
-        <input type="text" id="busca" placeholder="Digite para filtrar por qualquer campo..." onkeyup="render()">
+        <input type="text" id="busca" placeholder="🔍 Pesquisar em tudo..." onkeyup="render()">
     </div>
-
     <div class="box">
         <h3>Gestão CT Pro</h3>
         <select id="tipo" onchange="atualizarOpcoes()"></select>
@@ -29,9 +26,8 @@
         <select id="motivo"></select>
         <input type="text" id="detalhe" placeholder="Observações...">
         <input type="datetime-local" id="data">
-        <button class="btn-save" onclick="salvar()">Salvar Registro</button>
+        <button style="width:100%; background:var(--primary); color:white;" onclick="salvar()">Salvar</button>
     </div>
-
     <div id="lista"></div>
 </div>
 
@@ -39,36 +35,53 @@
     const config = {
         cons: { nomes: ["Claudia", "Lucineia", "Nadelson", "Samara", "Sandra"], motivos: ["Férias", "Plantão", "Palestra", "Reunião"] },
         adm: { nomes: ["Sheila", "Kamilly", "Raquel"], motivos: ["Férias", "Consulta", "Atestado"] },
+        limp: { nomes: ["Francinete"], motivos: ["Limpeza Geral", "Manutenção"] },
         veic: { nomes: ["Siena", "Air Cross"], motivos: ["Revisão", "OS"] },
-        afast: { nomes: ["Servidor X"], motivos: ["Afastamento Político"] }
+        afast: { nomes: ["Servidor"], motivos: ["Afastamento Político"] }
     };
+
+    function inicializar() {
+        document.getElementById('tipo').innerHTML = Object.keys(config).map(t => `<option value="${t}">${t.toUpperCase()}</option>`).join('');
+        atualizarOpcoes();
+        render();
+        verificarPrazos();
+    }
+
+    function atualizarOpcoes() {
+        const t = document.getElementById('tipo').value;
+        document.getElementById('nome').innerHTML = config[t].nomes.map(n => `<option value="${n}">${n}</option>`).join('');
+        document.getElementById('motivo').innerHTML = config[t].motivos.map(m => `<option value="${m}">${m}</option>`).join('');
+    }
+
+    function salvar() {
+        let db = JSON.parse(localStorage.getItem('ct_db') || '[]');
+        db.push({ id: Date.now(), tipo: document.getElementById('tipo').value, nome: document.getElementById('nome').value, motivo: document.getElementById('motivo').value, detalhe: document.getElementById('detalhe').value, data: document.getElementById('data').value });
+        localStorage.setItem('ct_db', JSON.stringify(db));
+        render();
+    }
 
     function render() {
         let db = JSON.parse(localStorage.getItem('ct_db') || '[]');
         let termo = document.getElementById('busca').value.toLowerCase();
-        
-        // Filtra comparando o termo com TODOS os campos
         let filtrados = db.filter(i => 
-            i.nome.toLowerCase().includes(termo) || 
-            i.tipo.toLowerCase().includes(termo) ||
-            i.motivo.toLowerCase().includes(termo) ||
-            i.detalhe.toLowerCase().includes(termo) ||
-            i.data.includes(termo)
+            i.nome.toLowerCase().includes(termo) || i.tipo.toLowerCase().includes(termo) || 
+            i.motivo.toLowerCase().includes(termo) || i.detalhe.toLowerCase().includes(termo) || i.data.includes(termo)
         );
 
         document.getElementById('lista').innerHTML = filtrados.map(i => `
             <div class="item">
-                <div><b>${i.nome}</b> (${i.tipo})<br><small>${i.motivo} - ${i.detalhe} | ${i.data.replace('T', ' ')}</small></div>
-                <button onclick="editar(${i.id})">✏️</button>
-                <button onclick="excluir(${i.id})" style="color:red">✕</button>
+                <div><b>${i.nome}</b><br><small>${i.motivo} | ${i.data.replace('T', ' ')}</small></div>
+                <div>
+                    <button onclick="editar(${i.id})">✏️</button>
+                    <button onclick="excluir(${i.id})" style="color:#ef4444;">✕</button>
+                </div>
             </div>
         `).join('');
     }
 
     function excluir(id) {
         if(confirm("Deseja realmente excluir este registro?")) {
-            let db = JSON.parse(localStorage.getItem('ct_db')).filter(i => i.id !== id);
-            localStorage.setItem('ct_db', JSON.stringify(db));
+            localStorage.setItem('ct_db', JSON.stringify(JSON.parse(localStorage.getItem('ct_db')).filter(i => i.id !== id)));
             render();
         }
     }
@@ -82,30 +95,26 @@
         document.getElementById('motivo').value = item.motivo;
         document.getElementById('detalhe').value = item.detalhe;
         document.getElementById('data').value = item.data;
-        excluir(id); // Remove o antigo para salvar como editado
+        excluir(id);
     }
 
-    // Lógica de Alertas por Regras (Férias e Afastamento)
     function verificarPrazos() {
         let db = JSON.parse(localStorage.getItem('ct_db') || '[]');
-        let agora = new Date();
-        db.forEach(item => {
-            let dataRegistro = new Date(item.data);
-            let diffDias = Math.ceil((dataRegistro - agora) / (1000 * 60 * 60 * 24));
-
-            if (item.motivo === "Férias" && (diffDias === 10 || diffDias === 5 || diffDias === 30 || diffDias === 15)) {
-                alert(`ALERTA: Férias de ${item.nome} em ${diffDias} dias!`);
-            } else if (item.motivo === "Afastamento Político" && diffDias % 15 === 0) {
-                alert(`ALERTA: Afastamento político de ${item.nome} em ${diffDias} dias.`);
+        let hoje = new Date();
+        db.forEach(i => {
+            let data = new Date(i.data);
+            let diff = Math.ceil((data - hoje) / (1000 * 60 * 60 * 24));
+            
+            if (i.motivo === "Férias" && (diff === 10 || diff === 5 || diff === 30 || diff === 15)) {
+                alert(`Aviso: Férias de ${i.nome} em ${diff} dias.`);
+            }
+            if (i.motivo === "Afastamento Político" && diff > 0 && diff % 15 === 0) {
+                alert(`Aviso: Afastamento Político de ${i.nome} em ${diff} dias.`);
             }
         });
     }
 
-    // ... (Manter as funções inicializar, atualizarOpcoes e salvar do código anterior)
-    
-    // Inicia e checa prazos
     inicializar();
-    verificarPrazos();
 </script>
 </body>
 </html>
