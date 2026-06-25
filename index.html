@@ -3,64 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão CT Pro</title>
+    <title>Gestão Adm - CT</title>
     <style>
-        :root { --cons: #2ecc71; --adm: #f1c40f; --veic: #e74c3c; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f8f9fa; padding: 15px; margin: 0; }
-        .box { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .filters { display: flex; gap: 5px; margin-bottom: 15px; justify-content: center; }
-        button { border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .btn-add { background: #3498db; color: white; width: 100%; margin-top: 10px; }
-        input, select { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .item { padding: 12px; margin-bottom: 8px; border-radius: 8px; border-left: 6px solid; cursor: pointer; background: #fff; display: flex; justify-content: space-between; }
-        .cons-b { border-left-color: var(--cons); }
-        .adm-b { border-left-color: var(--adm); }
-        .veic-b { border-left-color: var(--veic); }
+        body { font-family: sans-serif; background: #f4f4f9; padding: 15px; }
+        .box { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        select, input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 6px; }
+        .item { padding: 12px; margin-top: 10px; border-radius: 8px; border-left: 6px solid #f1c40f; background: white; display: flex; justify-content: space-between; align-items: center; }
+        button { width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="box">
-        <h2 style="margin-top:0">Painel de Gestão CT</h2>
-        <div class="filters">
-            <button onclick="render('todos')">🌐</button>
-            <button onclick="render('cons')">👨‍⚖️</button>
-            <button onclick="render('adm')">📁</button>
-            <button onclick="render('veic')">🚗</button>
-        </div>
-        <select id="cat">
-            <option value="cons">Conselheiro</option>
-            <option value="adm">Administrativo</option>
-            <option value="veic">Veículo</option>
-        </select>
-        <input type="text" id="nome" placeholder="Nome ou Item">
-        <input type="text" id="obs" placeholder="Detalhes (Ex: Férias, Manutenção)">
-        <button class="btn-add" onclick="salvar()">Adicionar Registro</button>
-    </div>
+<div class="box">
+    <h3>Gestão Administrativa</h3>
+    <select id="admNome">
+        <option>Sheila</option>
+        <option>Kamilly</option>
+        <option>Raquel</option>
+        <option>Francinete (Limpeza)</option>
+    </select>
+    
+    <select id="tipoMov">
+        <option value="Hora Extra">Hora Extra (+)</option>
+        <option value="Falta">Falta (-)</option>
+        <option value="Devendo Horas">Devendo Horas (-)</option>
+        <option value="Abono">Abono (+)</option>
+        <option value="Férias">Férias</option>
+        <option value="Dias na Casa">Dias na Casa (Contagem)</option>
+    </select>
+    
+    <input type="text" id="qtd" placeholder="Quantidade (ex: 2h, 1 dia, 5 dias)">
+    <input type="date" id="data">
+    <button onclick="salvar()">Registrar Movimentação</button>
+</div>
 
-    <div id="lista"></div>
+<div id="lista"></div>
 
-    <script>
-        function salvar() {
-            let data = JSON.parse(localStorage.getItem('db') || '[]');
-            data.push({ id: Date.now(), cat: document.getElementById('cat').value, nome: document.getElementById('nome').value, obs: document.getElementById('obs').value });
-            localStorage.setItem('db', JSON.stringify(data));
-            render('todos');
+<script>
+    function salvar() {
+        let db = JSON.parse(localStorage.getItem('adm_db') || '[]');
+        db.push({
+            id: Date.now(),
+            nome: document.getElementById('admNome').value,
+            tipo: document.getElementById('tipoMov').value,
+            qtd: document.getElementById('qtd').value,
+            data: document.getElementById('data').value
+        });
+        localStorage.setItem('adm_db', JSON.stringify(db));
+        render();
+    }
+
+    function remover(id) {
+        if(confirm("Excluir este registro?")) {
+            let db = JSON.parse(localStorage.getItem('adm_db')).filter(i => i.id !== id);
+            localStorage.setItem('adm_db', JSON.stringify(db));
+            render();
         }
-        function remover(id) {
-            let data = JSON.parse(localStorage.getItem('db')).filter(i => i.id !== id);
-            localStorage.setItem('db', JSON.stringify(data));
-            render('todos');
-        }
-        function render(cat) {
-            let data = JSON.parse(localStorage.getItem('db') || '[]');
-            const lista = document.getElementById('lista');
-            lista.innerHTML = data.filter(i => cat === 'todos' || i.cat === cat)
-                .map(i => `<div class="item ${i.cat}-b" onclick="remover(${i.id})">
-                    <div><b>${i.nome}</b><br><small>${i.obs}</small></div>
-                    <span style="color:#ccc">✕</span></div>`).join('');
-        }
-        render('todos');
-    </script>
+    }
+
+    function render() {
+        let db = JSON.parse(localStorage.getItem('adm_db') || '[]');
+        document.getElementById('lista').innerHTML = db.map(i => `
+            <div class="item" onclick="remover(${i.id})">
+                <div><b>${i.nome}</b> | ${i.tipo}<br><small>${i.data} - ${i.qtd}</small></div>
+                <span>✕</span>
+            </div>
+        `).join('');
+    }
+    render();
+</script>
 </body>
 </html>
+
+
+    
